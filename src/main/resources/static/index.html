@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>上传文件示例</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            padding: 50px;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .search-box button {
+            padding: 8px 16px;
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-box button:hover {
+            background-color: #145a9c;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="search-box">
+        <input type="text" id="versionInput" placeholder="版本号">
+        <input type="text" id="componentInput" placeholder="零件号">
+        <input type="text" id="supplierInput" placeholder="供应商">
+        <input type="text" id="managerInput" placeholder="管理员">
+        <button onclick="search()">查询</button>
+    </div>
+
+    <div class="layui-container">
+        <table class="layui-hide" id="userTable" lay-filter="userTableFilter"></table>
+    </div>
+    <button id="downloadBtn" style="
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 12px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 9999;
+">下载 Excel</button>
+</div>
+
+<script>
+    function formatDate(isoStr) {
+        if (!isoStr) return '';
+        const date = new Date(isoStr); // ISO 格式自动转为本地时间
+        const yyyy = date.getFullYear();
+        const MM = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const mm = String(date.getMinutes()).padStart(2, '0');
+        const ss = String(date.getSeconds()).padStart(2, '0');
+        return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`;
+    }
+</script>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.use(['table'], function () {
+        const table = layui.table;
+
+        // 初始化表格
+        table.render({
+            elem: '#userTable',
+            id: 'userTableReload', // 给表格设定唯一 ID 以便后续重载
+            url: '/version/list',
+            page: true,
+            method: 'get',
+            where: {
+                version_no: '',
+                component_number: ''
+            },
+            cols: [[
+                {type: 'numbers', title: '' , minWidth: 30},
+                {field: 'version_no', title: '版本号', minWidth: 30},
+                {field: 'component_number', title: '零件号', minWidth: 30},
+                {field: 'supplier', title: '供应商', minWidth: 30},
+                {field: 'manager', title: '管理员', minWidth: 30},
+                {field: 'all_component_quantity', title: '零件数量', minWidth: 30},
+                {field: 'start_time', title: '起始日期', minWidth: 30},
+                {field: 'enter_user', title: '录入用户', minWidth: 30},
+                {field: 'create_time', title: '录入日期', minWidth: 30,
+                    templet: function(d){
+                        return formatDate(d.create_time);
+                    }
+                }
+            ]]
+        });
+
+        // 给全局暴露一下 table 方便调用 reload
+        window.reloadTable = table;
+    });
+
+    function search() {
+        const version = document.getElementById('versionInput').value;
+        const component = document.getElementById('componentInput').value;
+        const supplier = document.getElementById('supplierInput').value;
+        const manager = document.getElementById('managerInput').value;
+
+        reloadTable.reload('userTableReload', {
+            page: {curr: 1},
+            where: {
+                version_no: version,
+                component_number: component,
+                supplier: supplier,
+                manager: manager
+            }
+        });
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', function () {
+        const version = document.getElementById('versionInput').value;
+        const component = document.getElementById('componentInput').value;
+        const supplier = document.getElementById('supplierInput').value;
+        const manager = document.getElementById('managerInput').value;
+
+        const params = new URLSearchParams();
+        if (version) params.append('version_no', version);
+        if (component) params.append('component_number', component);
+        if (supplier) params.append('supplier', supplier);
+        if (manager) params.append('manager', manager);
+
+        fetch('/version/downloadExcel?' + params.toString(), {
+            method: 'GET'
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("下载失败");
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "version_data.xlsx";
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                alert("下载出错：" + error);
+            });
+    });
+</script>
+</body>
+</html>
