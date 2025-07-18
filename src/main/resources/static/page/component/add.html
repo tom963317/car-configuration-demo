@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>录入零件数据</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui@2.8.18/dist/css/layui.css">
+</head>
+<body>
+
+<div class="layui-container" style="margin-top: 50px;">
+    <form class="layui-form" id="uploadForm" lay-filter="uploadForm">
+        <div class="layui-form-item">
+            <label class="layui-form-label">录入人</label>
+            <div class="layui-input-block">
+                <input type="text" name="enterUser" required lay-verify="required" placeholder="请输入录入人" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">选择输入零件文件</label>
+            <div class="layui-input-block">
+                <input type="file" name="file" id="excelFile" accept=".xls,.xlsx" required>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="submitForm">录入零件</button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/layui@2.8.18/dist/layui.js"></script>
+<script>
+    layui.use(['form', 'layer'], function(){
+        const form = layui.form;
+        const layer = layui.layer;
+        form.verify();
+        form.on('submit(submitForm)', function(data){
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                layer.msg('请选择一个 Excel 文件');
+                return false;
+            }
+
+            const formData = new FormData();
+            formData.append('enterUser', data.field.enterUser);
+            formData.append('file', file);
+
+            fetch('/component/add', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // 请求成功（状态码 200-299）
+                        layer.msg('上传成功');
+                    } else {
+                        // 请求失败，可能是 400、500 等
+                        layer.msg('上传失败，状态码：' + response.status);
+                    }
+                })
+                .catch(err => {
+                    layer.msg('上传失败：' + err);
+                });
+
+
+            return false; // 阻止默认提交表单
+        });
+    });
+</script>
+
+
+</body>
+</html>

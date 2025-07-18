@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -222,8 +223,8 @@ public class VersionController {
                 ps.setString(5, quantityStr);
                 ps.setDate(6, Date.valueOf(LocalDate.parse(startTime)));
                 ps.setString(7, enterUser);
-                ps.setDate(8, new Date(System.currentTimeMillis()));
-                ps.setDate(9, new Date(System.currentTimeMillis()));
+                ps.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
+                ps.setTimestamp(9, new Timestamp(System.currentTimeMillis()));
             }
 
             @Override

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>零件列表</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            padding: 50px;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .search-box button {
+            padding: 8px 16px;
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-box button:hover {
+            background-color: #145a9c;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="search-box">
+        <input type="text" id="enterUserInput" placeholder="录入人">
+        <button onclick="search()">查询</button>
+    </div>
+
+    <div class="layui-container">
+        <table class="layui-hide" id="componentTable" lay-filter="componentTableFilter"></table>
+    </div>
+</div>
+
+<script>
+    function formatDate(isoStr) {
+        if (!isoStr) return '';
+        const date = new Date(isoStr); // ISO 格式自动转为本地时间
+        const yyyy = date.getFullYear();
+        const MM = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const mm = String(date.getMinutes()).padStart(2, '0');
+        const ss = String(date.getSeconds()).padStart(2, '0');
+        return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`;
+    }
+</script>
+
+<script src="/layui/layui.js"></script>
+<script>
+    layui.use(['table'], function () {
+        const table = layui.table;
+
+        // 初始化表格
+        table.render({
+            elem: '#componentTable',
+            id: 'componentTableReload', // 给表格设定唯一 ID 以便后续重载
+            url: '/component/list',
+            page: true,
+            method: 'get',
+            where: {
+                enterUser: ''
+            },
+            cols: [[
+                {type: 'numbers', title: '' , minWidth: 30},
+                {field: 'component_number', title: '零件号', minWidth: 30},
+                {field: 'component_name', title: '零件名称', minWidth: 30},
+                {field: 'supplier', title: '供应商', minWidth: 30},
+                {field: 'enter_user', title: '录入人', minWidth: 30},
+                {field: 'create_time', title: '录入日期', minWidth: 30,
+                    templet: function(d){
+                        return formatDate(d.create_time);
+                    }
+                }
+            ]]
+        });
+
+        // 给全局暴露一下 table 方便调用 reload
+        window.reloadTable = table;
+    });
+
+    function search() {
+        const enterUser = document.getElementById('enterUserInput').value;
+
+        reloadTable.reload('componentTableReload', {
+            page: {curr: 1},
+            where: {
+                enterUser: enterUser
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

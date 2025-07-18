@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>生成版本文件</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui@2.8.18/dist/css/layui.css">
+</head>
+<body>
+
+<div class="layui-container" style="margin-top: 50px;">
+    <form class="layui-form" id="uploadForm" lay-filter="uploadForm">
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-block">
+                <input type="text" name="enterUser" required lay-verify="required" placeholder="请输入用户名" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">选择输入版本文件</label>
+            <div class="layui-input-block">
+                <input type="file" name="file" id="excelFile" accept=".xls,.xlsx" required>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="submitForm">生成版本计划</button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/layui@2.8.18/dist/layui.js"></script>
+<script>
+    layui.use(['form', 'layer'], function(){
+        const form = layui.form;
+        const layer = layui.layer;
+        form.verify();
+        form.on('submit(submitForm)', function(data){
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                layer.msg('请选择一个 Excel 文件');
+                return false;
+            }
+
+            const formData = new FormData();
+            formData.append('enterUser', data.field.enterUser);
+            formData.append('file', file);
+
+            fetch('/version/add', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络错误');
+                    }
+
+                    // 处理 Excel Blob
+                    return Promise.all([
+                        response.blob(),
+                        response.headers.get('Content-Disposition')
+                    ]);
+                })
+                .then(([blob, disposition]) => {
+                    // 提取文件名
+                    let filename = '导出结果.xlsx';
+                    if (disposition) {
+                        const match = disposition.match(/filename="?(.+?)"?$/);
+                        if (match && match[1]) {
+                            filename = decodeURIComponent(match[1]);
+                        }
+                    }
+
+                    // 触发下载
+                    const downloadUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(downloadUrl);
+
+                    layer.msg('上传并下载成功');
+                })
+                .catch(() => {
+                    layer.msg('上传失败: ' + err);
+                });
+
+            return false; // 阻止默认提交表单
+        });
+    });
+</script>
+
+
+</body>
+</html>

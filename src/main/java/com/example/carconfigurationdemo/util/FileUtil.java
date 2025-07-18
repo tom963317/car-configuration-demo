@@ -133,18 +133,18 @@ public class FileUtil {
         header.createCell(2).setCellValue("component_name");
         header.createCell(3).setCellValue("supplier");
         header.createCell(4).setCellValue("supplier_chain_managment");
-        header.createCell(5).setCellValue("enter_user");
-        header.createCell(6).setCellValue("enter_time");
+//        header.createCell(5).setCellValue("enter_user");
+//        header.createCell(6).setCellValue("enter_time");
 
 //        LocalDate start = LocalDate.of(2025, 8, 1);
         LocalDate start = LocalDate.parse(startTime);
 
         for (int i = 0; i < 12; i++) {
             LocalDate date = start.plusMonths(i); // 依次往后推
-            header.createCell(i + 6).setCellValue(date.format(formatter));
+            header.createCell(i + 5).setCellValue(date.format(formatter));
 
         }
-        for (int i = 0; i < 19; i++) {
+        for (int i = 0; i < 17; i++) {
             sheet.autoSizeColumn(i);
         }
 
